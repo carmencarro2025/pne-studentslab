@@ -1,16 +1,13 @@
-def fibonacci(n):
+def fibosum(n):
     a = 0
     b = 1
     result = []
-    for i in range(n):
+    for i in range(n + 1):
         result.append(a)
         c = a + b
         a = b
         b = c
-    return result
+    return sum(result)
 
-def fibosum(n):
-    k = fibonacci(n)
-    return sum(k)
-
-print(fibosum(5))
+print(f"Sum of the first 5 terms of the Fibonacci series: {fibosum(5)}")
+print(f"Sum of the first 10 terms of the Fibonacci series: {fibosum(10)}")
