@@ -1,0 +1,10 @@
+Result 1 is well printed. Whereas in the second print:
+
+In line 11, "ZeroDivisionError:" appears because the value c, d= 3 and
+when we call the function g in order to substract c and d we get t1 = 0.
+
+This will happen anytime parameters c and d of f function take the same values.
+That's why results 1, 3 and 4 are properly computed.
+
+If we comment the second print, the rest of the program will run properly.
+
