@@ -19,8 +19,9 @@ bases = {"A": 0, "C": 0, "G": 0, "T": 0}
 for seq in lines:
     seq = seq.strip() # Remove spaces and newline characters at the end of the string
     total_number += len(seq)
-
     result = count_bases(seq)
+    for key in result:
+        bases[key] += result[key]
 
 print("Total number of bases:", total_number)
 
