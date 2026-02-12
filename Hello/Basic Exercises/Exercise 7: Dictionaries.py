@@ -9,4 +9,14 @@ if __name__ == "__main__":
 
     print(f"Name: {student['name']}")
     print(f"Number of subjects: {len(student['subjects'])}")
-    print(f"Enrolled in PNE: {is student['PNE'] in student['subjects']}")
+    print(f"Enrolled in PNE: {'PNE' in student['subjects']}")
+    print(f"Databases grade: {student['grades']["Databases"]}")
+    total_grades = 0
+    subjects = 0
+    for subject, grade in student['grades'].items():
+        total_grades = total_grades + grade
+        subjects = subjects + 1
+    print(f"Average grade: {round(total_grades / subjects, 2)}")
+    print("Subject grades:")
+    for sub, grade in student['grades'].items():
+        print(f"    {sub}: {grade}")
