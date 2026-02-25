@@ -7,13 +7,13 @@ def seq_read_fasta(seq):
     seq = seq.replace("\n", "")
     return seq
 
-def seq_len(seq):
+def seq_len(seq=None):
     body = seq.find("\n")
     seq = seq[body:]
     seq = seq.replace("\n", "")
     return len(seq)
 
-def seq_count_base(seq, base):
+def seq_count_base(seq, base=None):
     return seq.count(base)
 
 def seq_count(seq):
