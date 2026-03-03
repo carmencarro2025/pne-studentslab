@@ -71,8 +71,4 @@ class Seq:
         self.strbases = seq
 
 
-def print_seqs(seq_list):
-    i = 1
-    for seq in seq_list:
-        print(f"Sequence {i}: (Length:{ seq.len()}) {seq}")
-        i += 1
+
