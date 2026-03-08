@@ -6,17 +6,24 @@ EXERCISE = 5
 
 print(f"-----| Practice {PRACTICE}, Exercise {EXERCISE} |------")
 
-IP = "212.128.255.77" # your IP address
-PORT = 8081
+IP = "212.128.254.249" # your IP address
+PORT = 8080
 
 c = Client(IP, PORT)
 print(c)
-c.__str__()
+
 SEQUENCES = "../P00/S04/Sequences/"
 s = Seq()
 FILENAME = SEQUENCES + "FRAT1" + ".txt"
 s.read_fasta(FILENAME)
-print(f"Gene FRAT1: {s.__str__()}")
-response = c.talk(s.__str__())
-print(f"From server: {response}")
-print(f"To server: {s.__str__()}\n")
+s_str = s.__str__()
+response1 = c.talk(f"Sending FRAT1 Gene to the server, in fragments of 10 bases...")
+print(f"Gene FRAT1: {s_str}")
+
+i = 0
+n = 1
+while n <= 5:
+    print(f"Fragment {n}: {s_str[i:i + 10]}")
+    response2 = c.talk(f"Fragment {n}: {s_str[i:i + 10]}")
+    i += 10
+    n += 1

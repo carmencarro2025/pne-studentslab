@@ -24,4 +24,3 @@ class Client:
         s.close()
         # Return the response
         return response
-

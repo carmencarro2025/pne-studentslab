@@ -11,4 +11,3 @@ PORT = 8081
 
 c = Client(IP, PORT)
 print(c)
-c.__str__()
