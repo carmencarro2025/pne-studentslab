@@ -14,7 +14,7 @@ s_str = s.__str__()
 print(f"Gene FRAT1: {s_str}")
 
 
-IP = "212.128.254.249"
+IP = "127.0.0.1"
 c1 = Client(IP, 8080)
 c1.talk(f"Sending FRAT1 Gene to the server, in fragments of 10 bases...")
 print(c1)
