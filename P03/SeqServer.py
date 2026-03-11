@@ -2,10 +2,9 @@ import socket
 from Seq1 import Seq
 
 PORT = 8080
-IP = "212.128.255.78"
+IP = "127.0.0.1"
 
 ls = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# -- Optional: This is for avoiding the problem of Port already in use
 ls.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 ls.bind((IP, PORT))
 ls.listen()
@@ -41,10 +40,8 @@ while True:
         msg = msg_raw.decode()
         l = msg.strip().split(" ")
         cmd = l[0]
-        n = l[1]
 
-        sequences = ["AAAA", "TTTT", "CCCC", "GGGG", "TATA"]
-
+        seq = ["AAAA", "TTTT", "CCCC", "GGGG", "TATA"]
 
         SEQUENCES = "../P00/S04/Sequences/"
         GENE_NAMES = ["U5", "ADA", "FRAT1", "FXN", "RNU6_269P"]
@@ -52,46 +49,56 @@ while True:
         if cmd == "PING":
             print("PING command!")
             print("OK!\n")
-            response = "OK!\n"
-            cs.send(response.encode())
+            r1 = "OK!\n"
+            cs.send(r1.encode())
 
-        elif cmd == "GET" and 0 <= int(n) <= 4:
+        elif cmd == "GET" and 0 <= int(l[1]) <= 4:
             print("GET")
-            print(sequences[int(n)])
+            r2 = seq[int(l[1])]
+            print(r2)
+            cs.send(r2.encode())
             print()
 
         elif cmd == "INFO":
             print("INFO")
-            s = Seq(n)
-            print(f"Sequence: {s}")
-            print(f"Total length: {s.len()}")
+            s = Seq(l[1])
+            r3 = f"Sequence: {s}\n"
+            r3 += f"Total length: {s.len()}\n"
             for base, count in s.count().items():
-                percent = count / s.len() * 100
-                print(f"{base}: {count} ({round(percent, 1)}%)")
+                if s.len() > 0:
+                    percent = count / s.len() * 100
+                    r3 += f"{base}: {count} ({round(percent, 1)}%)\n"
+                else:
+                    r3 += f"{base}: {count}\n"
+            print(r3)
+            cs.send(r3.encode())
             print()
 
         elif cmd == "COMP":
             print("COMP")
-            s = Seq(n)
-            print(s.complement())
+            s = Seq(l[1])
+            r4 = s.complement()
+            print(r4)
+            cs.send(r4.encode())
             print()
 
         elif cmd == "REV":
             print("REV")
-            s = Seq(n)
-            print(s.reverse())
+            s = Seq(l[1])
+            r5 = s.reverse()
+            print(r5)
+            cs.send(r5.encode())
             print()
 
-        elif cmd == "GENE" and n in GENE_NAMES:
+        elif cmd == "GENE" and l[1] in GENE_NAMES:
             print("GENE")
             s = Seq()
-            FILENAME = SEQUENCES + n + ".txt"
+            FILENAME = SEQUENCES + l[1] + ".txt"
             s.read_fasta(FILENAME)
-            print(s.__str__())
+            r6 = s.__str__()
+            print(r6)
+            cs.send(r6.encode())
             print()
-
-
-
 
         # -- Close the data socket
         cs.close()
