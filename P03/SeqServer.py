@@ -52,12 +52,15 @@ while True:
             r1 = "OK!\n"
             cs.send(r1.encode())
 
-        elif cmd == "GET" and 0 <= int(l[1]) <= 4:
-            print("GET")
-            r2 = seq[int(l[1])]
-            print(r2)
-            cs.send(r2.encode())
-            print()
+        elif cmd == "GET":
+            if 0 <= int(l[1]) <= 4:
+                print("GET")
+                r2 = seq[int(l[1])]
+                print(r2)
+                cs.send(r2.encode())
+                print()
+            else:
+                print("Please enter a number between 0 and 4")
 
         elif cmd == "INFO":
             print("INFO")
