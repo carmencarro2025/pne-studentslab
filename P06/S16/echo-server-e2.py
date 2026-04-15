@@ -32,8 +32,8 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
         if path == "/":
             contents = Path('html/form-2-personalized.html').read_text()
         elif path.startswith("/myserver"):
-            print(arguments["msg"][0])
-            if "&" in arguments["msg"][0]:
+            print(path)
+            if len(arguments) > 1:
                 contents = f"""<!DOCTYPE html>
                             <html lang="en" dir="ltr">
                               <head>
