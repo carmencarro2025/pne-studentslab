@@ -3,6 +3,20 @@ import socketserver
 import termcolor
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
+import jinja2 as j
+
+def read_html_file(filename):
+    contents = Path("html/" + filename).read_text()
+    contents = j.Template(contents)
+    return contents
+
+sequences = {
+    "0": "AAAAA",
+    "1": "CCCCC",
+    "2": "GGGGG",
+    "3": "TTTTT",
+    "4": "UUUUU"
+}
 
 # Define the Server's port
 PORT = 8080
@@ -15,6 +29,15 @@ socketserver.TCPServer.allow_reuse_address = True
 # Class with our Handler. It is a called derived from BaseHTTPRequestHandler
 # It means that our class inherits all his methods and properties
 class TestHandler(http.server.BaseHTTPRequestHandler):
+
+    def do_PING(self):
+        termcolor.cprint(self.requestline, 'green')
+
+        url_path = urlparse(self.path)
+        path = url_path.path  # "/echo"
+        arguments = parse_qs(url_path.query)
+        if path == "/":
+            contents = Path('html/index.html').read_text()
 
     def do_GET(self):
         """This method is called whenever the client invokes the GET method
@@ -30,37 +53,15 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
         # Open the form1.html file
         # Read the index from the file
         if path == "/":
-            contents = Path('html/form-2-personalized.html').read_text()
-        elif path.startswith("/myserver"):
-            print(path)
-            if len(arguments) > 1:
-                contents = f"""<!DOCTYPE html>
-                            <html lang="en" dir="ltr">
-                              <head>
-                                <meta charset="utf-8">
-                                <title>Received message:</title>
-                              </head>
-                              <body>
-                                <h1>Echoing the received message</h1>
-                                <p>{arguments["msg"][0].upper()}</p>
-                                <p></p>
-                                <a href="http://127.0.0.1:8080">Main page</a>
-                              </body>
-                            </html>"""
-            else:
-                contents = f"""<!DOCTYPE html>
-                                            <html lang="en" dir="ltr">
-                                              <head>
-                                                <meta charset="utf-8">
-                                                <title>Received message:</title>
-                                              </head>
-                                              <body>
-                                                <h1>Echoing the received message</h1>
-                                                <p>{arguments["msg"][0]}</p>
-                                                <p></p>
-                                                <a href="http://127.0.0.1:8080">Main page</a>
-                                              </body>
-                                            </html>"""
+            contents = Path('html/index.html').read_text()
+        elif path.startswith("/ping"):
+            contents = Path('html/ping.html').read_text()
+        elif path.startswith("/get"):
+            seqnumber = arguments["n"][0]
+            sequence = sequences[seqnumber]
+            contents = read_html_file("get.html").render(context={"seqnumber": seqnumber,
+                                                                  "sequence": sequence})
+
         else:
             contents = Path('html/error.html').read_text()
 
@@ -100,3 +101,4 @@ with socketserver.TCPServer(("", PORT), Handler) as httpd:
         print("")
         print("Stopped by the user")
         httpd.server_close()
+
