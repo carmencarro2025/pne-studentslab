@@ -1,5 +1,5 @@
 import socket
-from Seq1 import Seq
+import Seq1
 
 PORT = 8080
 IP = "127.0.0.1"
@@ -64,7 +64,7 @@ while True:
 
         elif cmd == "INFO":
             print("INFO")
-            s = Seq(l[1])
+            s = Seq1.Seq(l[1])
             r3 = f"Sequence: {s}\n"
             r3 += f"Total length: {s.len()}\n"
             for base, count in s.count().items():
@@ -79,7 +79,7 @@ while True:
 
         elif cmd == "COMP":
             print("COMP")
-            s = Seq(l[1])
+            s = Seq1.Seq(l[1])
             r4 = s.complement()
             print(r4)
             cs.send(r4.encode())
@@ -87,7 +87,7 @@ while True:
 
         elif cmd == "REV":
             print("REV")
-            s = Seq(l[1])
+            s = Seq1.Seq(l[1])
             r5 = s.reverse()
             print(r5)
             cs.send(r5.encode())
@@ -95,7 +95,7 @@ while True:
 
         elif cmd == "GENE" and l[1] in GENE_NAMES:
             print("GENE")
-            s = Seq()
+            s = Seq1.Seq()
             FILENAME = SEQUENCES + l[1] + ".txt"
             s.read_fasta(FILENAME)
             r6 = s.__str__()

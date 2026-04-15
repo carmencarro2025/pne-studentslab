@@ -10,6 +10,13 @@ def read_html_file(filename):
     contents = j.Template(contents)
     return contents
 
+def read_fasta(filename):
+    file = Path(filename).read_text()
+    body = file.find("\n")
+    seq = file[body:]
+    seq = seq.replace("\n", "")
+    return seq
+
 sequences = {
     "0": "AAAAA",
     "1": "CCCCC",
@@ -17,6 +24,8 @@ sequences = {
     "3": "TTTTT",
     "4": "UUUUU"
 }
+
+gene_names = ["U5", "ADA", "FRAT1", "FXN", "RNU6_269P"]
 
 # Define the Server's port
 PORT = 8080
@@ -29,15 +38,6 @@ socketserver.TCPServer.allow_reuse_address = True
 # Class with our Handler. It is a called derived from BaseHTTPRequestHandler
 # It means that our class inherits all his methods and properties
 class TestHandler(http.server.BaseHTTPRequestHandler):
-
-    def do_PING(self):
-        termcolor.cprint(self.requestline, 'green')
-
-        url_path = urlparse(self.path)
-        path = url_path.path  # "/echo"
-        arguments = parse_qs(url_path.query)
-        if path == "/":
-            contents = Path('html/index.html').read_text()
 
     def do_GET(self):
         """This method is called whenever the client invokes the GET method
@@ -61,7 +61,12 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
             sequence = sequences[seqnumber]
             contents = read_html_file("get.html").render(context={"seqnumber": seqnumber,
                                                                   "sequence": sequence})
-
+        elif path.startswith("/gene"):
+            seqname = arguments["gene"][0]
+            filename = "Sequences/" + seqname + ".txt"
+            sequence = read_fasta(filename)
+            contents = read_html_file("gene.html").render(context={"seqname": seqname,
+                                                                  "sequence": sequence})
         else:
             contents = Path('html/error.html').read_text()
 
