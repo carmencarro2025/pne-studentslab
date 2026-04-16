@@ -4,6 +4,7 @@ import termcolor
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 import jinja2 as j
+from Seq1 import Seq
 
 def read_html_file(filename):
     contents = Path("html/" + filename).read_text()
@@ -44,6 +45,7 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
         in the HTTP protocol request"""
 
         # Print the request line
+        global info, output
         termcolor.cprint(self.requestline, 'green')
 
         url_path = urlparse(self.path)
@@ -62,11 +64,29 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
             contents = read_html_file("get.html").render(context={"seqnumber": seqnumber,
                                                                   "sequence": sequence})
         elif path.startswith("/gene"):
+            sequence = Seq()
             seqname = arguments["gene"][0]
             filename = "Sequences/" + seqname + ".txt"
-            sequence = read_fasta(filename)
+            sequence.read_fasta(filename)
             contents = read_html_file("gene.html").render(context={"seqname": seqname,
                                                                   "sequence": sequence})
+        elif path.startswith("/operation"):
+            s = Seq(arguments["seq"][0].upper())
+            if arguments["op"][0] == "Info":
+                output = f"Total length: {s.len()}<br>"
+                for base, count in s.count().items():
+                    if s.len() > 0:
+                        percent = count / s.len() * 100
+                        output += f"{base}: {count} ({round(percent, 1)}%)<br>"
+                    else:
+                        output += f"{base}: {count}<br>"
+            elif arguments["op"][0] == "Comp":
+                output = s.complement()
+            else:
+                output = s.reverse()
+            contents = read_html_file("operation.html").render(context={"s": arguments["seq"][0].upper(),
+                                                                        "op": arguments["op"][0],
+                                                                        "output": output})
         else:
             contents = Path('html/error.html').read_text()
 

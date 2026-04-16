@@ -47,16 +47,18 @@
 <hr>
 
  <!-- FORM 4: OPERATIONS -->
- <form action="operation" method="get"></form>
-   Get a Gene. Select the name
-   <select name="gene">
-      <option value="U5">U5</option>
-      <option value="ADA">ADA</option>
-      <option value="FRAT1">FRAT1</option>
-      <option value="FXN">FXN</option>
-      <option value="RNU6_269P">RNU6_269P</option>
-    </select>
-    <input type="submit" value="GENE">
-  </form>
+ <form action="operation" method="get">
+   Write a sequence: <input type="text" name="seq">
+   <br>
+   Select operation
+   <input type="radio" name="op" value="Info" checked> Info
+   <input type="radio" name="op" value="Comp"> Comp
+   <input type="radio" name="op" value="Rev"> Rev
+   <br>
+   Perform operation:
+   <input type="submit" value="OPERATE!">
+ </form>
+  <hr>
+
 </body>
 </html>
