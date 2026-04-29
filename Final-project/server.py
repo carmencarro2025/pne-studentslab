@@ -5,6 +5,7 @@ import termcolor
 from pathlib import Path
 import jinja2 as j
 import json
+from Seq1 import Seq
 
 def read_html_file(filename):
     contents = Path("html/" + filename).read_text()
@@ -27,69 +28,93 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         """This method is called whenever the client invokes the GET method
         in the HTTP protocol request"""
+        status = 200
+        try:
+            global info, output, chromosome_length
+            termcolor.cprint(self.requestline, 'green')
 
-        # Print the request line
-        global info, output
-        termcolor.cprint(self.requestline, 'green')
+            url_path = urlparse(self.path)
+            path = url_path.path  # "/echo"
+            arguments = parse_qs(url_path.query)
 
-        url_path = urlparse(self.path)
-        path = url_path.path  # "/echo"
-        arguments = parse_qs(url_path.query)
+            if path == "/":
+                contents = Path('html/index.html').read_text()
 
-        if path == "/":
-            contents = Path('html/index.html').read_text()
+            elif path == "/listSpecies":
+                try:
+                    ENDPOINT = '/info/species'
+                    conn = http.client.HTTPSConnection(SERVER)
+                    conn.request("GET", ENDPOINT + PARAMS)
+                    response = conn.getresponse()
 
-        elif path == "/listSpecies":
-            ENDPOINT = '/info/species'
-            conn = http.client.HTTPSConnection(SERVER)
-            conn.request("GET", ENDPOINT + PARAMS)
-            response = conn.getresponse()
+                    d = json.loads(response.read().decode())
+                    list_species = d["species"]
+                    names = ""
+                    if not arguments:
+                        limit = "None"
+                        for species in list_species:
+                            name = species["common_name"]
+                            names += "<li>" + name.capitalize() + "</li>"
 
-            d = json.loads(response.read().decode())
-            list_species = d["species"]
-            print(list_species)
-            names = ""
-            if not arguments:
-                limit = "None"
-                for species in list_species:
-                    name = species["common_name"]
-                    names += "<li>" + name.capitalize() + "</li>"
+                    else:
+                        limit = int(arguments["limit"][0])
+                        for species in list_species[:limit]:
+                            name = species["common_name"]
+                            names += "<li>" + name.capitalize() + "</li>"
+                    contents = read_html_file("listSpecies.html").render(context={"limit": limit,
+                                                                                      "names": names,
+                                                                                      "num_species": len(list_species)})
+                except:
+                    status = 404
+                    contents = Path('html/error.html').read_text()
+
+            elif path == "/karyotype":
+                try:
+                    ENDPOINT = f'/info/assembly/{arguments["species"][0].replace(" ", "%20")}'
+                    conn = http.client.HTTPSConnection(SERVER)
+                    conn.request("GET", ENDPOINT + PARAMS)
+                    response = conn.getresponse()
+
+                    d = json.loads(response.read().decode())
+                    karyotype = d["karyotype"]
+                    kar = ""
+                    for n in karyotype:
+                        kar += n + "<br>"
+
+                    contents = read_html_file("karyotype.html").render(context={"kar": kar})
+                except:
+                    status = 404
+                    contents = Path('html/error.html').read_text()
+
+            elif path == "/chromosomeLength":
+                try:
+                    ENDPOINT = f'/info/assembly/{arguments["species"][0].replace(" ", "%20")}'
+                    conn = http.client.HTTPSConnection(SERVER)
+                    conn.request("GET", ENDPOINT + PARAMS)
+                    response = conn.getresponse()
+
+                    d = json.loads(response.read().decode())
+                    top_level_region = d["top_level_region"]
+                    for data in top_level_region:
+                        if data['coord_system'] == 'chromosome' and arguments["chromo"][0] == data['name']:
+                            chromosome_length = data['length']
+                    contents = read_html_file("chromosomeLength.html").render(context={"chromosome_length": chromosome_length})
+                except:
+                    status = 404
+                    contents = Path('html/error.html').read_text()
+
+            elif path == "/geneLookup":
+                pass
 
             else:
-                limit = int(arguments["limit"][0])
-                for species in list_species[:limit]:
-                    name = species["common_name"]
-                    names += "<li>" + name.capitalize() + "</li>"
-            print(arguments)
-            contents = read_html_file("listSpecies.html").render(context={"limit": limit,
-                                                                              "names": names,
-                                                                              "num_species": len(list_species)})
+                contents = Path('html/error.html').read_text()
 
-        elif path == "/karyotype":
-            ENDPOINT = f'/info/assembly/{arguments["species"][0]}'
-            conn = http.client.HTTPSConnection(SERVER)
-            conn.request("GET", ENDPOINT + PARAMS)
-            response = conn.getresponse()
-
-            d = json.loads(response.read().decode())
-            karyotype = d["karyotype"]
-            kar = ""
-            for n in karyotype:
-                kar += n + "<br>"
-
-            contents = read_html_file("karyotype.html").render(context={"kar": kar})
-
-        elif path == "/chromosomeLength":
-            pass
-
-
-
-
-        else:
+        except:
+            status = 404
             contents = Path('html/error.html').read_text()
 
         # Generating the response message
-        self.send_response(200)  # -- Status line: OK!
+        self.send_response(status)
 
         # Define the content-type header:
         self.send_header('Content-Type', 'text/html')
@@ -102,7 +127,6 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(str.encode(contents))
 
         return
-
 
 # ------------------------
 # - Server MAIN program
