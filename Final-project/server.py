@@ -1,4 +1,5 @@
 import http.server
+import http.client
 import socketserver
 from urllib.parse import urlparse, parse_qs
 import termcolor
@@ -11,6 +12,32 @@ def read_html_file(filename):
     contents = Path("html/" + filename).read_text()
     contents = j.Template(contents)
     return contents
+
+def get_id(arguments):
+    gene = arguments["gene"][0].upper()
+    ENDPOINT = f'/lookup/symbol/human/{gene}'
+    conn = http.client.HTTPSConnection('rest.ensembl.org')
+    conn.request("GET", ENDPOINT + '?content-type=application/json')
+    response = conn.getresponse()
+    d = json.loads(response.read().decode())
+    if d["display_name"] == gene:
+        gene_id = d["id"]
+    else:
+        print(f"Gene {gene} not found")
+    return gene_id
+
+def get_seq(arguments):
+    gene = arguments["gene"][0].upper()
+    gene_id = get_id(arguments)
+    ENDPOINT = f'/sequence/id/{gene_id}'
+    conn = http.client.HTTPSConnection('rest.ensembl.org')
+    conn.request("GET", ENDPOINT + '?content-type=application/json')
+    response = conn.getresponse()
+
+    d = json.loads(response.read().decode())
+    seq = d['seq']
+    return seq
+
 
 PORT = 8080
 SERVER = 'rest.ensembl.org'
@@ -30,7 +57,7 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
         in the HTTP protocol request"""
         status = 200
         try:
-            global info, output, chromosome_length
+            global info, output, chromosome_length, id, gene_id
             termcolor.cprint(self.requestline, 'green')
 
             url_path = urlparse(self.path)
@@ -104,7 +131,62 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
                     contents = Path('html/error.html').read_text()
 
             elif path == "/geneLookup":
-                pass
+                try:
+                    gene = arguments["gene"][0].upper()
+                    gene_id = get_id(arguments)
+                    contents = read_html_file("geneLookup.html").render(context={"gene_id": gene_id,
+                                                                                 "gene": gene})
+                except:
+                    status = 404
+                    contents = Path('html/error.html').read_text()
+
+            elif path == '/geneSeq':
+                try:
+                    gene = arguments["gene"][0].upper()
+                    seq = get_seq(arguments)
+                    contents = read_html_file("geneSeq.html").render(context={"seq": seq,
+                                                                                 "gene": gene})
+                except:
+                    status = 404
+                    contents = Path('html/error.html').read_text()
+
+            elif path == "/geneInfo":
+                try:
+                    gene = arguments["gene"][0].upper()
+                    gene_id = get_id(arguments)
+                    ENDPOINT = f'/lookup/id/{gene_id}?expand=1'
+                    conn = http.client.HTTPSConnection(SERVER)
+                    conn.request("GET", ENDPOINT + ";content-type=application/json")
+                    response = conn.getresponse()
+
+                    d = json.loads(response.read().decode())
+                    contents = read_html_file("geneInfo.html").render(context={"start": d["start"],
+                                                                               "end": d["end"],
+                                                                               "length": ["length"],
+                                                                               "id": gene_id,
+                                                                              "gene": gene,
+                                                                               "chromo": d["seq_region_name"]})
+
+                except:
+                    status = 404
+                    contents = Path('html/error.html').read_text()
+
+            elif path =="/geneCalc":
+                try:
+                    gene = arguments["gene"][0].upper()
+                    seq = Seq(get_seq(arguments))
+                    output = ""
+                    for base, count in seq.count().items():
+                        percent = count / len(seq.__str__()) * 100
+                        output += f"{base}: {count} ({round(percent, 1)}%)<br>"
+                    print(output)
+                    contents = read_html_file("geneCalc.html").render(context={"length": len(seq.__str__()),
+                                                                               "percentage": output,
+                                                                                "gene": gene})
+
+                except:
+                    status = 404
+                    contents = Path('html/error.html').read_text()
 
             else:
                 contents = Path('html/error.html').read_text()
