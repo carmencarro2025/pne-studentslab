@@ -26,6 +26,22 @@ def get_id(arguments):
         print(f"Gene {gene} not found")
     return gene_id
 
+def get_name(id):
+    ENDPOINT = f'/lookup/id/{id}'
+    conn = http.client.HTTPSConnection('rest.ensembl.org')
+    conn.request("GET", ENDPOINT + '?content-type=application/json')
+    response = conn.getresponse()
+    d = json.loads(response.read().decode())
+    if not d.get("display_name", None):
+        print(f"Gene {id} not found")
+        only_id = (id, "")
+        return only_id
+    else:
+        gene_name = d.get("display_name", None)
+        id_and_name = (id + ": ", gene_name)
+        return id_and_name
+
+
 def get_seq(arguments):
     gene = arguments["gene"][0].upper()
     gene_id = get_id(arguments)
@@ -154,15 +170,15 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
                 try:
                     gene = arguments["gene"][0].upper()
                     gene_id = get_id(arguments)
-                    ENDPOINT = f'/lookup/id/{gene_id}?expand=1'
+                    ENDPOINT = f'/lookup/id/{gene_id}?'
                     conn = http.client.HTTPSConnection(SERVER)
-                    conn.request("GET", ENDPOINT + ";content-type=application/json")
+                    conn.request("GET", ENDPOINT + "content-type=application/json")
                     response = conn.getresponse()
 
                     d = json.loads(response.read().decode())
                     contents = read_html_file("geneInfo.html").render(context={"start": d["start"],
                                                                                "end": d["end"],
-                                                                               "length": ["length"],
+                                                                               "length": int(d["end"]) - int(d["start"]),
                                                                                "id": gene_id,
                                                                               "gene": gene,
                                                                                "chromo": d["seq_region_name"]})
@@ -183,6 +199,32 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
                     contents = read_html_file("geneCalc.html").render(context={"length": len(seq.__str__()),
                                                                                "percentage": output,
                                                                                 "gene": gene})
+
+                except:
+                    status = 404
+                    contents = Path('html/error.html').read_text()
+
+            elif path == "/geneList":
+                try:
+                    chromo = arguments["chromo"][0]
+                    start = arguments["start"][0]
+                    end = arguments["end"][0]
+                    ENDPOINT = f'/overlap/region/human/{chromo}:{start}-{end}?feature=gene;feature=transcript;feature=cds;feature=exon;'
+                    conn = http.client.HTTPSConnection(SERVER)
+                    conn.request("GET", ENDPOINT + "content-type=application/json")
+                    response = conn.getresponse()
+                    lst = json.loads(response.read().decode())
+                    region = ""
+                    for gene in lst:
+                        id = gene["id"]
+                        gene = get_name(id)
+                        str_gene = gene[0] + gene[1]
+                        region += "<li>" + str_gene + "</li>"
+                    contents = read_html_file("geneList.html").render(context={"chromo": chromo,
+                                                                               "start": start,
+                                                                               "end": end,
+                                                                               "region": region})
+
 
                 except:
                     status = 404
