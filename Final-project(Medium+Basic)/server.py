@@ -8,7 +8,6 @@ import jinja2 as j
 import json
 from Seq1 import Seq
 
-
 def read_html_file(filename):
     contents = Path("html/" + filename).read_text()
     contents = j.Template(contents)
@@ -74,7 +73,7 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
         in the HTTP protocol request"""
         status = 200
         try:
-            global info, output, chromosome_length, id, gene_id, dic
+            global info, output, chromosome_length, id, gene_id
             termcolor.cprint(self.requestline, 'green')
 
             url_path = urlparse(self.path)
@@ -94,24 +93,20 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
                     d = json.loads(response.read().decode())
                     list_species = d["species"]
                     names = ""
-                    names_list = []
-                    print(arguments)
-                    if "limit" not in arguments:
+                    if not arguments:
                         limit = "None"
                         for species in list_species:
                             name = species["common_name"]
                             names += "<li>" + name.capitalize() + "</li>"
-                            names_list.append(name.capitalize())
+
                     else:
                         limit = int(arguments["limit"][0])
                         for species in list_species[:limit]:
                             name = species["common_name"]
                             names += "<li>" + name.capitalize() + "</li>"
-                    dic = {"limit": limit, "names": names, "num_species": len(list_species)}
-                    if "json" in arguments:
-                        contents = json.dumps(names_list)
-                    else:
-                        contents = read_html_file("listSpecies.html").render(context=dic)
+                    contents = read_html_file("listSpecies.html").render(context={"limit": limit,
+                                                                                      "names": names,
+                                                                                      "num_species": len(list_species)})
                 except:
                     status = 404
                     contents = Path('html/error.html').read_text()
@@ -224,7 +219,7 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
                         id = gene["id"]
                         gene = get_name(id)
                         str_gene = gene[0] + gene[1]
-                        region += "<li>" + str(str_gene) + "</li>"
+                        region += "<li>" + str_gene + "</li>"
                     contents = read_html_file("geneList.html").render(context={"chromo": chromo,
                                                                                "start": start,
                                                                                "end": end,
